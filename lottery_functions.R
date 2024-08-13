@@ -56,7 +56,7 @@ lexicographic = function(lottery_1, lottery_2){
 }
 
 # Function that calculates the number of EIPs used by the lexicographic rule.
-lex_EIPs = function(lottery_1, lottery_2){
+LEX_EIP = function(lottery_1, lottery_2){
   
   # Initializing number of EIPs.
   num_eips = 0
