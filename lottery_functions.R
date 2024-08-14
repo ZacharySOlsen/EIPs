@@ -181,9 +181,35 @@ SAT = function(lottery_1, lottery_2, cutoff){
 # Satisificing EIPs. Need to think on this one further. Someone could potentially
 # stop doing reads and compares  earlier than this. Currently the above function
 # isn't built for that.
-SAT_EIP = function(size){
-  num_eips = size*2 + size*2
-  return(num_eips)
+SAT_EIP = function(lottery_1, lottery_2, cutoff){
+  num_eip = 0
+  num_eip_1 = 0
+  num_eip_2 = 0
+  prizes_1 = lottery_1 |> select(prize) |> pull()
+  prizes_2 = lottery_2 |> select(prize) |> pull()
+  
+  for (i in 1:length(lottery_1$prize)) {
+    if(prizes_1[i] >= cutoff){
+      num_eip_1 = 2*i
+    }
+    else{
+      num_eip_1 = 2*i
+      break
+    }
+  }
+  
+  for (j in 1:length(lottery_2$prize)) {
+    if(prizes_2[j] >= cutoff){
+      num_eip_2 = 2*j
+    }
+    
+    else{
+      num_eip_2 = 2*j
+      break
+    }
+  }
+  num_eip = num_eip_1 + num_eip_2
+  return(num_eip)
 }
 
 # Function creating the cumulative probabilities
