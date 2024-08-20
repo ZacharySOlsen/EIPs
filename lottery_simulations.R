@@ -3,6 +3,8 @@ rm(list = ls())
 
 library(tidyverse)
 library(LaplacesDemon)
+library(randomForest)
+library(pdp)
 
 set.seed(1892)
 
@@ -73,138 +75,81 @@ for (j in 2:5) {
   }
 }
 
-results |> summarize(mean(LEX_accuracy))
-results |> summarize(mean(EBA_accuracy))
-results |> summarize(mean(EQW_accuracy))
-results |> summarize(mean(SAT_accuracy))
+# Finding the right cutoff for high vs low dissimilarity.
+training_samples = sample.int(nrow(results), 0.75 * nrow(results))
+train = results[training_samples,] |> select(EBA_accuracy, EBA_eips, dissimilarity, EV_1, EV_2, var_1, var_2, size) |> ungroup()
 
-results |> summarize(mean(LEX_eips))
-results |> summarize(mean(EBA_eips))
-results |> summarize(mean(EQW_eips))
-results |> summarize(mean(SAT_eips))
+EBA_dissim = randomForest(EBA_accuracy ~ dissimilarity, data = train, keep.forest = TRUE)
+randomForest::partialPlot(EBA_dissim, pred.data = train, x.var = dissimilarity)
+varImpPlot(EBA_dissim)
+partial(EBA_dissim, pred.var = "dissimilarity", train = train) |> plotPartial()
 
 small_dissim = results |> filter(dissimilarity < 1)
 large_dissim = results |> filter(dissimilarity > 1)
 
-# Accuracy and EIPs based on dissimilarity amd size.
-small_dissim |> filter(size == 2) |> summarize(mean(LEX_accuracy))
-large_dissim |> filter(size == 2) |> summarize(mean(LEX_accuracy))
+# Initializing vectors to contain names.
+graph_name_small = c()
+graph_name_large = c()
 
-small_dissim |> filter(size == 2) |> summarize(mean(LEX_eips))
-large_dissim |> filter(size == 2) |> summarize(mean(LEX_eips))
+title_name_large = c()
+title_name_small = c()
 
-small_dissim |> filter(size == 2) |> summarize(mean(EBA_accuracy))
-large_dissim |> filter(size == 2) |> summarize(mean(EBA_accuracy))
+# For loop creating vector names.
+for (i in 2:5) {
+  graph = paste("graph", sep = "_", i)
+  graph_name_large[i-1] = paste(graph, sep = "_", "large")
+  graph_name_small[i-1] = paste(graph, sep = "_", "small")
+  
+  title_name_large[i-1] = paste(i, sep = " ", "Element Lotteries with Large Dissimilarity")
+  title_name_small[i-1] = paste(i, sep = " ", "Element Lotteries with Small Dissimilarity")
+}
 
-small_dissim |> filter(size == 2) |> summarize(mean(EBA_eips))
-large_dissim |> filter(size == 2) |> summarize(mean(EBA_eips))
-
-small_dissim |> filter(size == 2) |> summarize(mean(EQW_accuracy))
-large_dissim |> filter(size == 2) |> summarize(mean(EQW_accuracy))
-
-small_dissim |> filter(size == 2) |> summarize(mean(EQW_eips))
-large_dissim |> filter(size == 2) |> summarize(mean(EQW_eips))
-
-small_dissim |> filter(size == 2) |> summarize(mean(SAT_accuracy))
-large_dissim |> filter(size == 2) |> summarize(mean(SAT_accuracy))
-
-small_dissim |> filter(size == 2) |> summarize(mean(SAT_eips))
-large_dissim |> filter(size == 2) |> summarize(mean(SAT_eips))
-
-# Size 3
-small_dissim |> filter(size == 3) |> summarize(mean(LEX_accuracy))
-large_dissim |> filter(size == 3) |> summarize(mean(LEX_accuracy))
-
-small_dissim |> filter(size == 3) |> summarize(mean(LEX_eips))
-large_dissim |> filter(size == 3) |> summarize(mean(LEX_eips))
-
-small_dissim |> filter(size == 3) |> summarize(mean(EBA_accuracy))
-large_dissim |> filter(size == 3) |> summarize(mean(EBA_accuracy))
-
-small_dissim |> filter(size == 3) |> summarize(mean(EBA_eips))
-large_dissim |> filter(size == 3) |> summarize(mean(EBA_eips))
-
-small_dissim |> filter(size == 3) |> summarize(mean(EQW_accuracy))
-large_dissim |> filter(size == 3) |> summarize(mean(EQW_accuracy))
-
-small_dissim |> filter(size == 3) |> summarize(mean(EQW_eips))
-large_dissim |> filter(size == 3) |> summarize(mean(EQW_eips))
-
-small_dissim |> filter(size == 3) |> summarize(mean(SAT_accuracy))
-large_dissim |> filter(size == 3) |> summarize(mean(SAT_accuracy))
-
-small_dissim |> filter(size == 3) |> summarize(mean(SAT_eips))
-large_dissim |> filter(size == 3) |> summarize(mean(SAT_eips))
-
-# Size 4
-small_dissim |> filter(size == 4) |> summarize(mean(LEX_accuracy))
-large_4_lex_accuracy =large_dissim |> filter(size == 4) |> summarize(mean(LEX_accuracy)) |> pull()
-
-small_dissim |> filter(size == 4) |> summarize(mean(LEX_eips))
-large_4_lex_eip =large_dissim |> filter(size == 4) |> summarize(mean(LEX_eips)) |> pull()
-
-small_dissim |> filter(size == 4) |> summarize(mean(EBA_accuracy))
-large_4_EBA_accuracy = large_dissim |> filter(size == 4) |> summarize(mean(EBA_accuracy)) |> pull()
-
-small_dissim |> filter(size == 4) |> summarize(mean(EBA_eips))
-large_4_EBA_eip = large_dissim |> filter(size == 4) |> summarize(mean(EBA_eips)) |> pull()
-
-small_dissim |> filter(size == 4) |> summarize(mean(EQW_accuracy))
-large_4_EQW_accuracy = large_dissim |> filter(size == 4) |> summarize(mean(EQW_accuracy)) |> pull()
-
-small_dissim |> filter(size == 4) |> summarize(mean(EQW_eips))
-large_4_EQW_eip = large_dissim |> filter(size == 4) |> summarize(mean(EQW_eips)) |> pull()
-
-small_dissim |> filter(size == 4) |> summarize(mean(SAT_accuracy))
-large_4_SAT_accuracy = large_dissim |> filter(size == 4) |> summarize(mean(SAT_accuracy)) |> pull()
-
-small_dissim |> filter(size == 4) |> summarize(mean(SAT_eips))
-large_4_SAT_eip = large_dissim |> filter(size == 4) |> summarize(mean(SAT_eips)) |> pull()
-
-WADD_4_EIP = 2*(4 + 4 + 3) + 1
-
-WADD_4_accuracy = 1
-
-accuracy_4 = c(large_4_EBA_accuracy, large_4_EQW_accuracy, large_4_lex_accuracy, large_4_SAT_accuracy, WADD_4_accuracy)
-names(accuracy_4) = c("EBA", "EQW", "LEX", "SAT", "WADD")
-
-name = c("EBA", "EQW", "LEX", "SAT", "WADD")
-
-eip_4 = c(large_4_EBA_eip, large_4_EQW_eip, large_4_lex_eip, large_4_SAT_eip, WADD_4_EIP)
-names(eip_4) = c("EBA", "EQW", "LEX", "SAT", "WADD")
-
-graph_4_large_data = tibble(accuracy_4, eip_4, name)
-
-ggplot(data = graph_4_large_data ,aes(x = eip_4, y = accuracy_4, label = label)) + geom_point() + geom_text(hjust = 0.4, vjust = -0.2)
-
-# Size 5
-small_dissim |> filter(size == 5) |> summarize(mean(LEX_accuracy))
-large_dissim |> filter(size == 5) |> summarize(mean(LEX_accuracy))
-
-small_dissim |> filter(size == 5) |> summarize(mean(LEX_eips))
-large_dissim |> filter(size == 5) |> summarize(mean(LEX_eips))
-
-small_dissim |> filter(size == 5) |> summarize(mean(EBA_accuracy))
-large_dissim |> filter(size == 5) |> summarize(mean(EBA_accuracy))
-
-small_dissim |> filter(size == 5) |> summarize(mean(EBA_eips))
-large_dissim |> filter(size == 5) |> summarize(mean(EBA_eips))
-
-small_dissim |> filter(size == 5) |> summarize(mean(EQW_accuracy))
-large_dissim |> filter(size == 5) |> summarize(mean(EQW_accuracy))
-
-small_dissim |> filter(size == 5) |> summarize(mean(EQW_eips))
-large_dissim |> filter(size == 5) |> summarize(mean(EQW_eips))
-
-small_dissim |> filter(size == 5) |> summarize(mean(SAT_accuracy))
-large_dissim |> filter(size == 5) |> summarize(mean(SAT_accuracy))
-
-small_dissim |> filter(size == 5) |> summarize(mean(SAT_eips))
-large_dissim |> filter(size == 5) |> summarize(mean(SAT_eips))
-
-
-results = results |> mutate(sd_1 = sqrt(var_1)) |> mutate(sd_2 = sqrt(var_2))
-
+# Loop creating graphs.
+for (i in 2:5) {
+  EBA_small = small_dissim |> filter(size == i) |> summarize(mean(EBA_accuracy)) |> pull()
+  EBA_eip_small = small_dissim |> filter(size == i) |> summarize(mean(EBA_eips)) |> pull()
+  
+  EBA_large = large_dissim |> filter(size == i) |> summarize(mean(EBA_accuracy)) |> pull()
+  EBA_eip_large = large_dissim |> filter(size == i) |> summarize(mean(EBA_eips)) |> pull()
+  
+  EQW_small = small_dissim |> filter(size == i) |> summarize(mean(EQW_accuracy)) |> pull()
+  EQW_eip_small = small_dissim |> filter(size == i) |> summarize(mean(EQW_eips)) |> pull()
+  
+  EQW_large = large_dissim |> filter(size == i) |> summarize(mean(EQW_accuracy)) |> pull()
+  EQW_eip_large = large_dissim |> filter(size == i) |> summarize(mean(EQW_eips)) |> pull()
+  
+  LEX_small = small_dissim |> filter(size == i) |> summarize(mean(LEX_accuracy)) |> pull()
+  LEX_eip_small = small_dissim |> filter(size == i) |> summarize(mean(LEX_eips)) |> pull()
+  
+  LEX_large = large_dissim |> filter(size == i) |> summarize(mean(LEX_accuracy)) |> pull()
+  LEX_eip_large = large_dissim |> filter(size == i) |> summarize(mean(LEX_eips)) |> pull()
+  
+  SAT_small = small_dissim |> filter(size == i) |> summarize(mean(SAT_accuracy)) |> pull()
+  SAT_eip_small = small_dissim |> filter(size == i) |> summarize(mean(SAT_eips)) |> pull()
+  
+  SAT_large = large_dissim |> filter(size == i) |> summarize(mean(SAT_accuracy)) |> pull()
+  SAT_eip_large = large_dissim |> filter(size == i) |> summarize(mean(SAT_eips)) |> pull()
+  
+  WADD_accuracy = 1
+  WADD_eips = 2 * ( i + i + (i-1)) + 1
+  
+  name = c("EBA", "EQW", "LEX", "SAT", "WADD")
+  
+  small_accuracy = c(EBA_small, EQW_small, LEX_small, SAT_small, WADD_accuracy)
+  small_eip = c(EBA_eip_small, EQW_eip_small, LEX_eip_small, SAT_eip_small, WADD_eips)
+  
+  large_accuracy = c(EBA_large, EQW_large, LEX_large, SAT_large, WADD_accuracy)
+  large_eip = c(EBA_eip_large, EQW_eip_large, LEX_eip_large, SAT_eip_large, WADD_eips)
+  
+  graph_data_small = tibble(small_accuracy, small_eip, name)
+  graph_data_large = tibble(large_accuracy, large_eip, name)
+  
+  small_graph = ggplot(data = graph_data_small, mapping = aes(x = small_eip, y = small_accuracy, label = name)) + geom_point() + ylim(0, 1) + geom_text(hjust = 0.4, vjust = -0.2) + labs(title = title_name_small[i-1], x = "Number of EIPs", y = "Accuracy")
+  large_graph = ggplot(data = graph_data_large, mapping = aes(x = large_eip, y = large_accuracy, label = name)) + geom_point() + ylim(0, 1) + geom_text(hjust = 0.4, vjust = -0.2) + labs(title = title_name_large[i-1], x = "Number of EIPs", y = "Accuracy")
+  
+  assign(graph_name_large[i-1], large_graph)
+  assign(graph_name_small[i-1], small_graph)
+}
 
 # Testing. Not final.
 eba_on_dissim = lm(EBA_accuracy ~ dissimilarity + sd_1 + sd_2, data = results) |> summary() |> 
